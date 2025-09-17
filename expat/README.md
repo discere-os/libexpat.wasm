@@ -1,8 +1,12 @@
-[![Run Linux CI tasks](https://github.com/libexpat/libexpat/actions/workflows/linux.yml/badge.svg)](https://github.com/libexpat/libexpat/actions/workflows/linux.yml)
-[![Packaging status](https://repology.org/badge/tiny-repos/expat.svg)](https://repology.org/metapackage/expat/versions)
-[![Downloads SourceForge](https://img.shields.io/sourceforge/dt/expat?label=Downloads%20SourceForge)](https://sourceforge.net/projects/expat/files/)
-[![Downloads GitHub](https://img.shields.io/github/downloads/libexpat/libexpat/total?label=Downloads%20GitHub)](https://github.com/libexpat/libexpat/releases)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10205/badge)](https://www.bestpractices.dev/projects/10205)
+# @discere-os/libexpat.wasm
+
+WebAssembly port of Expat - Fast streaming XML parser library written in C99.
+
+[![CI/CD](https://github.com/discere-os/discere-nucleus/actions/workflows/libexpat-wasm-ci.yml/badge.svg)](https://github.com/discere-os/discere-nucleus/actions)
+[![JSR](https://jsr.io/badges/@discere-os/libexpat.wasm)](https://jsr.io/@discere-os/libexpat.wasm)
+[![npm version](https://badge.fury.io/js/@discere-os%2Flibexpat.wasm.svg)](https://badge.fury.io/js/@discere-os%2Flibexpat.wasm)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](COPYING)
+[![Status](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/discere-os/discere-nucleus)
 
 > [!CAUTION]
 >
@@ -309,3 +313,20 @@ EXPAT_WITH_LIBBSD:BOOL=OFF
 // Make use of syscall SYS_getrandom (ON|OFF|AUTO) [default=AUTO]
 EXPAT_WITH_SYS_GETRANDOM:STRING=AUTO
 ```
+
+## 💖 Support This Work
+
+This WebAssembly port is part of a larger effort to bring professional desktop applications to browsers with native performance.
+
+**👨‍💻 About the Maintainer**: [Isaac Johnston (@superstructor)](https://github.com/superstructor) - Building foundational browser-native computing infrastructure through systematic C/C++ to WebAssembly porting.
+
+**📊 Impact**: 70+ open source WASM libraries enabling professional applications like Blender, GIMP, and scientific computing tools to run natively in browsers.
+
+**🚀 Your Support Enables**:
+- Continued maintenance and updates
+- Performance optimizations
+- New library ports and integrations
+- Documentation and tutorials
+- Cross-browser compatibility testing
+
+**[💖 Sponsor this work](https://github.com/sponsors/superstructor)** to help build the future of browser-native computing.
