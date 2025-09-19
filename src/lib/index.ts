@@ -38,7 +38,7 @@ export type * from "./types.ts";
 interface LibexpatModule {
   ccall: (fname: string, returnType: string, argTypes: string[], args: unknown[]) => unknown;
   cwrap: (fname: string, returnType: string, argTypes: string[]) => Function;
-  UTF8ToString: (ptr: number) => string;
+  UTF8ToString: (ptr: number, maxBytesToRead?: number) => string;
   stringToUTF8: (str: string, ptr: number, maxLength: number) => number;
   addFunction: (func: Function, signature: string) => number;
   removeFunction: (funcPtr: number) => void;
@@ -246,7 +246,7 @@ export default class Libexpat {
     // Set element handlers
     if (handlers.onStartElement || handlers.onEndElement) {
       const startHandler = handlers.onStartElement ?
-        module.addFunction((name: number, attrs: number) => {
+        module.addFunction((userData: number, name: number, attrs: number) => {
           const elementName = module.UTF8ToString(name);
           const attributes: Record<string, string> = {};
 
@@ -266,13 +266,13 @@ export default class Libexpat {
           }
 
           handlers.onStartElement!(elementName, attributes);
-        }, 'vii') : 0;
+        }, 'viii') : 0;
 
       const endHandler = handlers.onEndElement ?
-        module.addFunction((name: number) => {
+        module.addFunction((userData: number, name: number) => {
           const elementName = module.UTF8ToString(name);
           handlers.onEndElement!(elementName);
-        }, 'vi') : 0;
+        }, 'vii') : 0;
 
       if (startHandler) this.currentHandlers.set('start', startHandler);
       if (endHandler) this.currentHandlers.set('end', endHandler);
@@ -287,10 +287,10 @@ export default class Libexpat {
 
     // Set character data handler
     if (handlers.onCharacterData) {
-      const charHandler = module.addFunction((data: number, len: number) => {
-        const text = module.UTF8ToString(data);
+      const charHandler = module.addFunction((userData: number, data: number, len: number) => {
+        const text = module.UTF8ToString(data, len);
         handlers.onCharacterData!(text);
-      }, 'vii');
+      }, 'viii');
 
       this.currentHandlers.set('chardata', charHandler);
       module.ccall(
@@ -303,10 +303,10 @@ export default class Libexpat {
 
     // Set comment handler
     if (handlers.onComment) {
-      const commentHandler = module.addFunction((data: number) => {
+      const commentHandler = module.addFunction((userData: number, data: number) => {
         const comment = module.UTF8ToString(data);
         handlers.onComment!(comment);
-      }, 'vi');
+      }, 'vii');
 
       this.currentHandlers.set('comment', commentHandler);
       module.ccall(
@@ -319,11 +319,11 @@ export default class Libexpat {
 
     // Set processing instruction handler
     if (handlers.onProcessingInstruction) {
-      const piHandler = module.addFunction((target: number, data: number) => {
+      const piHandler = module.addFunction((userData: number, target: number, data: number) => {
         const piTarget = module.UTF8ToString(target);
         const piData = module.UTF8ToString(data);
         handlers.onProcessingInstruction!(piTarget, piData);
-      }, 'vii');
+      }, 'viii');
 
       this.currentHandlers.set('pi', piHandler);
       module.ccall(
@@ -336,9 +336,9 @@ export default class Libexpat {
 
     // Set CDATA handlers
     if (handlers.onStartCDATA) {
-      const startCDataHandler = module.addFunction(() => {
+      const startCDataHandler = module.addFunction((userData: number) => {
         handlers.onStartCDATA!();
-      }, 'v');
+      }, 'vi');
 
       this.currentHandlers.set('startCData', startCDataHandler);
       module.ccall(
@@ -350,9 +350,9 @@ export default class Libexpat {
     }
 
     if (handlers.onEndCDATA) {
-      const endCDataHandler = module.addFunction(() => {
+      const endCDataHandler = module.addFunction((userData: number) => {
         handlers.onEndCDATA!();
-      }, 'v');
+      }, 'vi');
 
       this.currentHandlers.set('endCData', endCDataHandler);
       module.ccall(
@@ -365,11 +365,11 @@ export default class Libexpat {
 
     // Set namespace handlers
     if (handlers.onStartNamespace) {
-      const startNsHandler = module.addFunction((prefix: number, uri: number) => {
+      const startNsHandler = module.addFunction((userData: number, prefix: number, uri: number) => {
         const nsPrefix = prefix ? module.UTF8ToString(prefix) : null;
         const nsUri = module.UTF8ToString(uri);
         handlers.onStartNamespace!(nsPrefix, nsUri);
-      }, 'vii');
+      }, 'viii');
 
       this.currentHandlers.set('startNs', startNsHandler);
       module.ccall(
@@ -381,10 +381,10 @@ export default class Libexpat {
     }
 
     if (handlers.onEndNamespace) {
-      const endNsHandler = module.addFunction((prefix: number) => {
+      const endNsHandler = module.addFunction((userData: number, prefix: number) => {
         const nsPrefix = prefix ? module.UTF8ToString(prefix) : null;
         handlers.onEndNamespace!(nsPrefix);
-      }, 'vi');
+      }, 'vii');
 
       this.currentHandlers.set('endNs', endNsHandler);
       module.ccall(

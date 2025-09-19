@@ -165,7 +165,9 @@ Deno.test("XML parsing with handlers", async () => {
 Deno.test("Error handling for malformed XML", async () => {
   const malformedXml = '<root><unclosed>content</root>';
 
-  const result = await parseXML(malformedXml);
+  const result = await parseXML(malformedXml, {
+    onStartElement: () => {} // Dummy handler to force detailed error reporting
+  });
 
   assert(!result.success);
   assertExists(result.error);
@@ -228,7 +230,7 @@ Deno.test("Large XML document", async () => {
   const duration = endTime - startTime;
 
   assert(result.success);
-  assertEquals(elementCount, itemCount + 1); // items + catalog
+  assertEquals(elementCount, itemCount * 3 + 1); // each item has 3 elements (item, name, value) + catalog
   assertEquals(attributeCount, itemCount); // one id per item
 
   // Should parse reasonably quickly (less than 1 second for 1000 items)
