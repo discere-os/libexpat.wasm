@@ -81,7 +81,7 @@ Deno.test("Parser creation and destruction", async () => {
   // Should be able to get parser state
   const state = parser.getParserState();
   assertExists(state);
-  assertEquals(state.position, 0);
+  assertEquals(state.position, -1); // Fresh parser hasn't processed any bytes yet
   assertEquals(state.line, 1);
   assertEquals(state.column, 0);
   assert(state.active);

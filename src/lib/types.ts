@@ -50,9 +50,9 @@ export interface XMLHandlers {
   /** Called for CDATA section end */
   onEndCDATA?: () => void;
   /** Called for namespace declaration start */
-  onStartNamespace?: (prefix: string, uri: string) => void;
+  onStartNamespace?: (prefix: string | null, uri: string) => void;
   /** Called for namespace declaration end */
-  onEndNamespace?: (prefix: string) => void;
+  onEndNamespace?: (prefix: string | null) => void;
 }
 
 export interface SIMDCapabilities {

@@ -261,12 +261,12 @@ build_main_module() {
         -sEXPORT_ES6=1 \
         -sEXPORT_NAME="LibexpatModule" \
         -sEXPORTED_FUNCTIONS="${MAIN_MODULE_EXPORTS}" \
-        -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8","addFunction","removeFunction"]' \
+        -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString","stringToUTF8","addFunction","removeFunction","HEAPU8","HEAPU32"]' \
         -sALLOW_MEMORY_GROWTH=1 \
         -sINITIAL_MEMORY=33554432 \
         -sMAXIMUM_MEMORY=134217728 \
         -sALLOW_TABLE_GROWTH=1 \
-        -sINITIAL_TABLE=256 \
+        -sINITIAL_TABLE=512 \
         -sENVIRONMENT=web,webview,worker \
         -sNODEJS_CATCH_EXIT=0 \
         -sNODEJS_CATCH_REJECTION=0 \

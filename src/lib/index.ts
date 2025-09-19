@@ -45,6 +45,7 @@ interface LibexpatModule {
   _malloc: (size: number) => number;
   _free: (ptr: number) => void;
   HEAPU8: Uint8Array;
+  HEAPU32: Uint32Array;
 }
 
 /**
@@ -157,8 +158,9 @@ export default class Libexpat {
 
   /**
    * Create a new XML parser instance
+   * @returns 0 on success, -1 on failure
    */
-  createParser(options: ParserOptions = {}): void {
+  createParser(options: ParserOptions = {}): number {
     this.ensureInitialized();
 
     if (this.parser) {
@@ -184,7 +186,7 @@ export default class Libexpat {
     }
 
     if (!this.parser) {
-      throw new Error('Failed to create XML parser');
+      return -1; // Failed to create parser
     }
 
     // Configure parser options
@@ -206,6 +208,8 @@ export default class Libexpat {
         [this.parser, parsing]
       );
     }
+
+    return 0; // Success
   }
 
   /**
@@ -250,16 +254,11 @@ export default class Libexpat {
           if (attrs) {
             let i = 0;
             while (true) {
-              const attrNamePtr = module.HEAPU8[attrs + i * 4] |
-                                 (module.HEAPU8[attrs + i * 4 + 1] << 8) |
-                                 (module.HEAPU8[attrs + i * 4 + 2] << 16) |
-                                 (module.HEAPU8[attrs + i * 4 + 3] << 24);
+              const attrNamePtr = module.HEAPU32[attrs / 4 + i];
               if (!attrNamePtr) break;
 
-              const attrValuePtr = module.HEAPU8[attrs + (i + 1) * 4] |
-                                  (module.HEAPU8[attrs + (i + 1) * 4 + 1] << 8) |
-                                  (module.HEAPU8[attrs + (i + 1) * 4 + 2] << 16) |
-                                  (module.HEAPU8[attrs + (i + 1) * 4 + 3] << 24);
+              const attrValuePtr = module.HEAPU32[attrs / 4 + i + 1];
+              if (!attrValuePtr) break;
 
               attributes[module.UTF8ToString(attrNamePtr)] = module.UTF8ToString(attrValuePtr);
               i += 2;
@@ -334,6 +333,67 @@ export default class Libexpat {
         [parser, piHandler]
       );
     }
+
+    // Set CDATA handlers
+    if (handlers.onStartCDATA) {
+      const startCDataHandler = module.addFunction(() => {
+        handlers.onStartCDATA!();
+      }, 'v');
+
+      this.currentHandlers.set('startCData', startCDataHandler);
+      module.ccall(
+        'expat_set_start_cdata_handler',
+        'void',
+        ['number', 'number'],
+        [parser, startCDataHandler]
+      );
+    }
+
+    if (handlers.onEndCDATA) {
+      const endCDataHandler = module.addFunction(() => {
+        handlers.onEndCDATA!();
+      }, 'v');
+
+      this.currentHandlers.set('endCData', endCDataHandler);
+      module.ccall(
+        'expat_set_end_cdata_handler',
+        'void',
+        ['number', 'number'],
+        [parser, endCDataHandler]
+      );
+    }
+
+    // Set namespace handlers
+    if (handlers.onStartNamespace) {
+      const startNsHandler = module.addFunction((prefix: number, uri: number) => {
+        const nsPrefix = prefix ? module.UTF8ToString(prefix) : null;
+        const nsUri = module.UTF8ToString(uri);
+        handlers.onStartNamespace!(nsPrefix, nsUri);
+      }, 'vii');
+
+      this.currentHandlers.set('startNs', startNsHandler);
+      module.ccall(
+        'expat_set_start_namespace_decl_handler',
+        'void',
+        ['number', 'number'],
+        [parser, startNsHandler]
+      );
+    }
+
+    if (handlers.onEndNamespace) {
+      const endNsHandler = module.addFunction((prefix: number) => {
+        const nsPrefix = prefix ? module.UTF8ToString(prefix) : null;
+        handlers.onEndNamespace!(nsPrefix);
+      }, 'vi');
+
+      this.currentHandlers.set('endNs', endNsHandler);
+      module.ccall(
+        'expat_set_end_namespace_decl_handler',
+        'void',
+        ['number', 'number'],
+        [parser, endNsHandler]
+      );
+    }
   }
 
   /**
@@ -358,9 +418,12 @@ export default class Libexpat {
       // Copy string to WASM memory
       module.stringToUTF8(xmlString, xmlPtr, xmlLength + 1);
 
-      // Use SIMD-accelerated parsing if available
+      // Use SIMD-accelerated parsing if available AND no handlers are set
+      // (expat_parse_string doesn't support callbacks)
       let result: number;
-      if (this.performanceConfig.useSIMD && this.getSIMDCapabilities().simdSupported) {
+      if (this.performanceConfig.useSIMD &&
+          this.getSIMDCapabilities().simdSupported &&
+          !handlers) {
         result = module.ccall(
           'expat_parse_string',
           'number',
@@ -382,7 +445,16 @@ export default class Libexpat {
       const endTime = performance.now();
       const parseTime = endTime - startTime;
 
-      if (result === 1) { // XML_STATUS_OK
+      // expat_parse_string returns 0 for success, 1 for error
+      // expat_parse returns XML_STATUS_OK (1) for success, XML_STATUS_ERROR (0) for error
+      const usedSIMDPath = this.performanceConfig.useSIMD &&
+                          this.getSIMDCapabilities().simdSupported &&
+                          !handlers;
+      const isSuccess = usedSIMDPath
+        ? result === 0  // expat_parse_string: 0 = success
+        : result === 1; // expat_parse: 1 = XML_STATUS_OK
+
+      if (isSuccess) {
         return {
           success: true,
           bytesProcessed: xmlLength
