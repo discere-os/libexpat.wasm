@@ -18,10 +18,12 @@
     "demo": "deno run --allow-read --allow-write demo-deno.ts",
     "test": "deno test --allow-read --allow-write --no-check tests/deno/",
     "benchmark": "deno run --allow-read --allow-write bench/xml.bench.ts",
-    "build": "deno task build:wasm",
-    "build:wasm": "./build-dual.sh all",
+    "build": "deno task build:wasm:meson",
+    "build:main:meson": "meson setup build-main --cross-file=scripts/emscripten.cross --prefix=$PWD/install -Dlibdir=wasm -Dbindir=wasm && meson compile -C build-main expat-main && meson install -C build-main",
+    "build:side:meson": "meson setup build-side --cross-file=scripts/emscripten.cross --prefix=$PWD/install -Dlibdir=wasm -Dbindir=wasm && meson compile -C build-side expat-side && meson install -C build-side",
+    "build:wasm:meson": "deno task build:main:meson && deno task build:side:meson",
     "build:npm": "deno run --allow-all _build_npm.ts",
-    "clean": "rm -rf build*/ dist/ npm/ && echo '✅ Cleaned all build artifacts'",
+    "clean": "rm -rf build-* install/ dist/ npm/ && echo '✅ Cleaned all build artifacts'",
     "check": "deno check src/lib/index.ts"
   },
   "compilerOptions": {

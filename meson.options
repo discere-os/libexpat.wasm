@@ -1,0 +1,3 @@
+option('main_module', type: 'boolean', value: true)
+option('side_module', type: 'boolean', value: true)
+option('simd', type: 'boolean', value: true)
