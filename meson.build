@@ -35,11 +35,20 @@ shared_module('expat-side',
   files('wasm/expat_wasm_side.c') + core_sources,
   include_directories: incs,
   name_prefix: '',
+  name_suffix: 'wasm',
   c_args: cargs,
   link_args: [
     '-sSIDE_MODULE=2','-fPIC','-O3','-flto',
     '-sEXPORTED_FUNCTIONS=["_expat_wasm_version"]',
   ],
+  install: true,
+  install_dir: get_option('libdir')
+)
+
+static_library('expat',
+  core_sources,
+  include_directories: incs,
+  c_args: cargs,
   install: true,
   install_dir: get_option('libdir')
 )
