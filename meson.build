@@ -39,6 +39,7 @@ shared_module('expat-side',
   c_args: cargs,
   link_args: [
     '-sSIDE_MODULE=2','-fPIC','-O3','-flto',
+    '-sERROR_ON_UNDEFINED_SYMBOLS=0',  # Host provides dependencies
     '-sEXPORTED_FUNCTIONS=["_expat_wasm_version"]',
   ],
   install: true,
